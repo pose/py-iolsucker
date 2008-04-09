@@ -14,7 +14,7 @@ MATERIAL_DIDACTICO_PATH = BASE_PATH + 'newmaterialdid.asp'
 IOL_DESKTOP_PATH = BASE_PATH + 'mydesktop.asp'
 
 class AbstractIOLPathNode(object):
-    """ Nodo perteneciente al arbol de una materia """
+    """ Node belonging to a subjet's tree. """
 
     def __init__(self, url, parent=None, name=None):
         self.url = url
@@ -22,18 +22,19 @@ class AbstractIOLPathNode(object):
 	self.name = name
         self.buildNode()
 
+    #Hook.
     def buildNode(self):
         pass
 
 
 class IOLFile(AbstractIOLPathNode):
-    """ Archivo de una materia """
+    """ Subjet's file """
     def buildNode(self):
-	r = PyIOLSucker().IOLUrlOpen(self.url)
-	soup = BeautifulSoup(r.read())
+	webPage = PyIOLSucker().IOLUrlOpen(self.url)
+	soup = BeautifulSoup(webPage.read())
 
-	r = PyIOLSucker().IOLUrlOpen(BASE_PATH + soup('frame')[0]['src'])
-	soup = BeautifulSoup(r.read())
+	webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + soup('frame')[0]['src'])
+	soup = BeautifulSoup(webPage.read())
 	
 	self.file = SILVESTRE_PATH + soup('a')[0]['href']
 
@@ -41,13 +42,13 @@ class IOLFile(AbstractIOLPathNode):
 	return  self.name
         
 class IOLAbstractFolder(AbstractIOLPathNode):
-    """ Directorio de una materia """
+    """ Subjet's directory """
     def __init__(self, url, parent=None, name=None):
         self._children = []
         AbstractIOLPathNode.__init__(self, url, parent, name)
 
     def buildNode(self):
-        r = PyIOLSucker().IOLUrlOpen(self.url)
+        webPage = PyIOLSucker().IOLUrlOpen(self.url)
         soup = BeautifulSoup(r.read())
         table = soup('tbody')[0]
         files = table('tr', 'hand')
@@ -56,7 +57,7 @@ class IOLAbstractFolder(AbstractIOLPathNode):
         for folder in folders:
 	    folder_name = ((folder('td',colspan=2)[0])('font')[0].string).strip()
             self._children.append(IOLFolder( BASE_PATH + folder('a')[0]['href'], self, name=folder_name))
-        
+
         for f in files:
 	    file_name = (f('td')[1])('font')[0].contents[0].string.strip()
             number = re.findall("[0-9]+", f['onclick'])[0]
@@ -89,6 +90,9 @@ class IOLFolder(IOLAbstractFolder):
 #    _children = property(__getReal, None, None)
 
 class PyIOLSucker:
+
+    __instance = None
+
     class __impl:
         """Implementation of the singleton instance"""
         user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
@@ -101,22 +105,22 @@ class PyIOLSucker:
             params = urllib.urlencode({'txtdni': dni,
                                         'txtpwd': passwd,
                                         'cmd': 'login'})
-        
+
             req = urllib2.Request(IOL_LOGIN_PATH, params, self.headers)
-            r = urllib2.urlopen(req)
+            webPage = urllib2.urlopen(req)
             self.cookies = cookielib.CookieJar()
-            self.cookies.extract_cookies(r,req)
+            self.cookies.extract_cookies(webPage,req)
 
         def isLogged(self):
             if self.cookies is None:
                 return False
 
             try:
-                r = self.IOLUrlOpen( IOL_DESKTOP_PATH )
-                soup = BeautifulSoup(r.read())
+                webPage = self.IOLUrlOpen( IOL_DESKTOP_PATH )
+                soup = BeautifulSoup(webPage.read())
             except urllib2.HTTPError, e:
                 return False
-            
+
             if soup('title')[0] == 'The page cannot be displayed':
                 return False
             return True
@@ -128,8 +132,6 @@ class PyIOLSucker:
                 return urllib2.urlopen(req)
             except urllib2.URLError, e:
                 raise urllib2.URLError
-
-    __instance = None
 
     def __init__(self):
         """ Create singleton instance """
@@ -146,7 +148,7 @@ class PyIOLSucker:
         """ Delegate access to implementation """
         return setattr(self.__instance, attr, value)
 
-class Subject:
+class Subject(object):
     def __init__(self, url):
         r = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
         self.folder = IOLFolder(MATERIAL_DIDACTICO_PATH, name='root')
@@ -161,12 +163,12 @@ def getSubjects():
     except IOError, e:
         subjects = []
     except EOFError, e:
-        subjects = []        
+        subjects = []
 
     #Nav bar
-    r = PyIOLSucker().IOLUrlOpen(IOL_NAVBAR_PATH) 
-    html = r.read()
-    
+    webPage = PyIOLSucker().IOLUrlOpen(IOL_NAVBAR_PATH) 
+    html = webPage.read()
+
     soup = BeautifulSoup(html)
     #Omito el primer td que es de Ingeniera Informatica
     #consigo las materias que curso
@@ -180,9 +182,9 @@ def getSubjects():
     output = open('subjects_iol.pkl','wb')
     cPickle.dump(subjects, output)
     output.close()
-            
+
     return subjects
-            
+
 def acidRain(t):
     #TODO: REFACTOR
     if str(t.__class__) == '<class \'iol.IOLFile\'>':
@@ -197,7 +199,7 @@ def acidRain(t):
 
 def getFeed(dni, passwd):
     files = []
-    
+
     sucker = PyIOLSucker()
     if not sucker.isLogged():
         sucker.doLogin(dni,passwd)
@@ -205,7 +207,7 @@ def getFeed(dni, passwd):
 
     for subject in subs:
         files = files + acidRain(subject.folder)
-    
+
     items = []
 
     for i in files:
@@ -223,6 +225,10 @@ def getFeed(dni, passwd):
     	description = "ITBA Feed",
     	lastBuildDate = datetime.datetime.now(),
     	items = items)
-    
+
     rss.write_xml(open("itba.xml", "w"))
+    
+
+if __name__ == '__main__':
+    print 'Hola'
 
