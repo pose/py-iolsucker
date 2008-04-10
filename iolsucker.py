@@ -3,7 +3,6 @@ import urllib2, urllib, cookielib
 import re
 import datetime
 from BeautifulSoup import BeautifulSoup
-import PyRSS2Gen
 import cPickle
 
 SILVESTRE_PATH = 'http://silvestre.itba.edu.ar'
@@ -19,9 +18,9 @@ class AbstractIOLPathNode(object):
     def __init__(self, url, parent=None, name=None):
         self.url = url
         self.parent = parent
-	self.name = name
+        self.name = name
         self.buildNode()
-
+        
     #Hook.
     def buildNode(self):
         pass
@@ -30,16 +29,16 @@ class AbstractIOLPathNode(object):
 class IOLFile(AbstractIOLPathNode):
     """ Subjet's file """
     def buildNode(self):
-	webPage = PyIOLSucker().IOLUrlOpen(self.url)
-	soup = BeautifulSoup(webPage.read())
+        webPage = PyIOLSucker().IOLUrlOpen(self.url)
+        soup = BeautifulSoup(webPage.read())
 
-	webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + soup('frame')[0]['src'])
-	soup = BeautifulSoup(webPage.read())
-	
-	self.file = SILVESTRE_PATH + soup('a')[0]['href']
+        webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + soup('frame')[0]['src'])
+        soup = BeautifulSoup(webPage.read())
+        
+        self.file = SILVESTRE_PATH + soup('a')[0]['href']
 
     def __repr__(self):
-	return  self.name
+        return  self.name
         
 class IOLAbstractFolder(AbstractIOLPathNode):
     """ Subjet's directory """
@@ -49,22 +48,22 @@ class IOLAbstractFolder(AbstractIOLPathNode):
 
     def buildNode(self):
         webPage = PyIOLSucker().IOLUrlOpen(self.url)
-        soup = BeautifulSoup(r.read())
+        soup = BeautifulSoup(webPage.read())
         table = soup('tbody')[0]
         files = table('tr', 'hand')
         folders = filter ( lambda x: x.findAll('img', alt='Ir a carpeta') != [], table('tr'))
 
         for folder in folders:
-	    folder_name = ((folder('td',colspan=2)[0])('font')[0].string).strip()
+            folder_name = ((folder('td',colspan=2)[0])('font')[0].string).strip()
             self._children.append(IOLFolder( BASE_PATH + folder('a')[0]['href'], self, name=folder_name))
 
         for f in files:
-	    file_name = (f('td')[1])('font')[0].contents[0].string.strip()
+            file_name = (f('td')[1])('font')[0].contents[0].string.strip()
             number = re.findall("[0-9]+", f['onclick'])[0]
             self._children.append(IOLFile( BASE_PATH + 'showfile.asp?fiid=' + str(number), self, name=file_name))
 
     def __repr__(self):
-	return  self.name + self._children.__repr__()
+        return  self.name + self._children.__repr__()
 
 
 class IOLFolder(IOLAbstractFolder):
@@ -89,6 +88,8 @@ class IOLFolder(IOLAbstractFolder):
 
 #    _children = property(__getReal, None, None)
 
+
+#Albert: shouldn't be class PyIOLSucker(object): ?
 class PyIOLSucker:
 
     __instance = None
@@ -174,6 +175,8 @@ def getSubjects():
     #consigo las materias que curso
     materias = soup('td', colspan='2')[1:]
     
+    print materias
+    
     subject_links = map( lambda x: x('a')[0]['href'],  materias)
     if subject_links:
         for subject_link in subject_links:
@@ -188,47 +191,12 @@ def getSubjects():
 def acidRain(t):
     #TODO: REFACTOR
     if str(t.__class__) == '<class \'iol.IOLFile\'>':
- 	return [t]
+        return [t]
     else:
-	files_ = []
- 	for i in t._children:
-	     new_files = acidRain(i)
-	     files_ = files_ + new_files
-	return files_
-
-
-def getFeed(dni, passwd):
-    files = []
-
-    sucker = PyIOLSucker()
-    if not sucker.isLogged():
-        sucker.doLogin(dni,passwd)
-    subs = getSubjects()
-
-    for subject in subs:
-        files = files + acidRain(subject.folder)
-
-    items = []
-
-    for i in files:
-	items.append(PyRSS2Gen.RSSItem(
-		title = i.name,
-		link = i.file,
-		description = i.name,
-		pubDate =  datetime.datetime.now()
-		))
-	
-
-    rss = PyRSS2Gen.RSS2(
-    	title = "ITBA feed",
-	link = SILVESTRE_PATH,
-    	description = "ITBA Feed",
-    	lastBuildDate = datetime.datetime.now(),
-    	items = items)
-
-    rss.write_xml(open("itba.xml", "w"))
-    
-
-if __name__ == '__main__':
-    print 'Hola'
+        files_ = []
+        for i in t._children:
+         new_files = acidRain(i)
+         files_ = files_ + new_files
+ 
+    return files_
 

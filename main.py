@@ -5,14 +5,17 @@ import getpass
 
 def main():
 
-    #TODO
-    #dni should be gotten from stdin not from os.
-    dni = getpass.getuser()
-    pwd = getpass.getpass("enter password for user %s: " %dni)
+    #TODO Verify if dni is correct.
+    dni = raw_input('Enter your DNI: ')
+    pwd = getpass.getpass("Enter password for DNI %s: " %dni)
 
-    suck = PyIOLSucker()
-    suck.doLogin( dni, pwd )
+    sucker = PyIOLSucker()
+    if not sucker.isLogged():
+        sucker.doLogin(dni, pwd)
+    subs = getSubjects()
 
-    print suck.isLogged()
+    for subject in subs:
+        files = files + acidRain(subject.folder)
+
 
 main()
