@@ -11,6 +11,7 @@ IOL_LOGIN_PATH = BASE_PATH + 'mynav.asp'
 IOL_NAVBAR_PATH = BASE_PATH + 'mynav.asp'
 MATERIAL_DIDACTICO_PATH = BASE_PATH + 'newmaterialdid.asp'
 IOL_DESKTOP_PATH = BASE_PATH + 'mydesktop.asp'
+NEWS_PATH = BASE_PATH + 'novlistall.asp'
 
 class AbstractIOLPathNode(object):
     """ Node belonging to a subjet's tree. """
@@ -20,7 +21,7 @@ class AbstractIOLPathNode(object):
         self.parent = parent
         self.name = name
         self.buildNode()
-        
+
     #Hook.
     def buildNode(self):
         pass
@@ -34,12 +35,12 @@ class IOLFile(AbstractIOLPathNode):
 
         webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + soup('frame')[0]['src'])
         soup = BeautifulSoup(webPage.read())
-        
+
         self.file = SILVESTRE_PATH + soup('a')[0]['href']
 
     def __repr__(self):
         return  self.name
-        
+
 class IOLAbstractFolder(AbstractIOLPathNode):
     """ Subjet's directory """
     def __init__(self, url, parent=None, name=None):
@@ -60,7 +61,8 @@ class IOLAbstractFolder(AbstractIOLPathNode):
         for f in files:
             file_name = (f('td')[1])('font')[0].contents[0].string.strip()
             number = re.findall("[0-9]+", f['onclick'])[0]
-            self._children.append(IOLFile( BASE_PATH + 'showfile.asp?fiid=' + str(number), self, name=file_name))
+            self._children.append(IOLFile( BASE_PATH + 'showfile.asp?fiid=' + str(number),\
+                                 self, name=file_name))
 
     def __repr__(self):
         return  self.name + self._children.__repr__()
@@ -151,7 +153,7 @@ class PyIOLSucker:
 
 class Subject(object):
     def __init__(self, url):
-        r = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
+        webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
         self.folder = IOLFolder(MATERIAL_DIDACTICO_PATH, name='root')
 
 def getSubjects():
@@ -167,16 +169,16 @@ def getSubjects():
         subjects = []
 
     #Nav bar
-    webPage = PyIOLSucker().IOLUrlOpen(IOL_NAVBAR_PATH) 
+    webPage = PyIOLSucker().IOLUrlOpen(IOL_NAVBAR_PATH)
     html = webPage.read()
 
     soup = BeautifulSoup(html)
     #Omito el primer td que es de Ingeniera Informatica
     #consigo las materias que curso
     materias = soup('td', colspan='2')[1:]
-    
+
     print materias
-    
+
     subject_links = map( lambda x: x('a')[0]['href'],  materias)
     if subject_links:
         for subject_link in subject_links:
