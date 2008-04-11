@@ -153,8 +153,72 @@ class PyIOLSucker:
 
 class Subject(object):
     def __init__(self, url):
-        webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
+        self.webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
         self.folder = IOLFolder(MATERIAL_DIDACTICO_PATH, name='root')
+
+class News(object):
+
+    def __init__(self):
+        #HTML needed to parse news is gotten. 
+        self.webPage = PyIOLSucker().IOLUrlOpen(NEWS_PATH)
+        self.html = self.webPage.read()
+        self.soup = BeautifulSoup(self.html)
+
+        #List of singleNews
+        self.newsList = []
+
+        #Vars used to parse news
+        bgcolor = None
+        father = None
+        section = None
+        link = None
+        delLink = None
+        title = None
+        clase = None
+
+        #Every table @ HTML is parse depending on bgcolor attribute.
+        self.tables = self.soup.findAll('tr')
+        for table in self.tables:
+            for at in table.attrs:
+                if at[0] == 'bgcolor':
+                    bgcolor = at[1]
+            
+            if bgcolor == 'LIGHTSTEELBLUE':
+                father = table.td.string
+            elif bgcolor == 'SILVER':
+                section = table.td.string
+            elif bgcolor == 'WHITE':
+                link = table.attrs[2][1]
+                delLink = table.a.attrs[0][1]
+                title = table.td.contents[2]
+                self.newsList.append( singleNews(father, section, link, delLink, title) )
+    
+    def printNews(self):
+        for news in self.newsList:
+            print   'Father: %s\n \
+                    Section: %s\n \
+                    Link: %s\n \
+                    DelLink: %s\n \
+                    Title: %s \n '\
+                    % ( news.father, news.section, news.link, news.delLink, news.title)
+
+
+class singleNews(object):
+    #singleNews variables.
+    link = None
+    delLink = None
+    father = None
+    section = None
+    title = None
+
+    def __init__(self, father, section, link, delLink, title ):
+        self.father = father
+        self.section = section
+        self.link = link
+        self.delLink = delLink
+        self.title = title
+
+
 
 def getSubjects():
 
@@ -176,8 +240,6 @@ def getSubjects():
     #Omito el primer td que es de Ingeniera Informatica
     #consigo las materias que curso
     materias = soup('td', colspan='2')[1:]
-
-    print materias
 
     subject_links = map( lambda x: x('a')[0]['href'],  materias)
     if subject_links:
