@@ -12,10 +12,12 @@ def main():
     sucker = PyIOLSucker()
     if not sucker.isLogged():
         sucker.doLogin(dni, pwd)
-    subs = getSubjects()
+    news = News()
+    news.printNews()
+    #subs = getSubjects()
 
-    for subject in subs:
-        files = files + acidRain(subject.folder)
+    #for subject in subs:
+    #    files = files + acidRain(subject.folder)
 
 
 main()
