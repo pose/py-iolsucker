@@ -187,20 +187,23 @@ class News(object):
                 father = table.td.string
             elif bgcolor == 'SILVER':
                 section = table.td.string
-            elif bgcolor == 'WHITE':
+            elif bgcolor == 'WHITE' and table.a:
                 link = table.attrs[2][1]
                 delLink = table.a.attrs[0][1]
                 title = table.td.contents[2]
                 self.newsList.append( singleNews(father, section, link, delLink, title) )
     
     def printNews(self):
-        for news in self.newsList:
-            print   'Father: %s\n \
-                    Section: %s\n \
-                    Link: %s\n \
-                    DelLink: %s\n \
-                    Title: %s \n '\
-                    % ( news.father, news.section, news.link, news.delLink, news.title)
+        if self.newsList:
+            for news in self.newsList:
+                print   'Father: %s\n \
+                        Section: %s\n \
+                        Link: %s\n \
+                        DelLink: %s\n \
+                        Title: %s \n '\
+                        % ( news.father, news.section, news.link, news.delLink, news.title)
+        else:
+            print 'No news'
 
 
 class singleNews(object):
