@@ -14,6 +14,8 @@ def main():
         sucker.doLogin(dni, pwd)
     news = News()
     news.printNews()
+    news.deleteAll()
+    news.printNews()
     #subs = getSubjects()
 
     #for subject in subs:

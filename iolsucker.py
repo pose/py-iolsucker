@@ -159,7 +159,7 @@ class Subject(object):
 class News(object):
 
     def __init__(self):
-        #HTML needed to parse news is gotten. 
+        #Gets HTML needed to parse news. 
         self.webPage = PyIOLSucker().IOLUrlOpen(NEWS_PATH)
         self.html = self.webPage.read()
         self.soup = BeautifulSoup(self.html)
@@ -184,26 +184,30 @@ class News(object):
                     bgcolor = at[1]
             
             if bgcolor == 'LIGHTSTEELBLUE':
-                father = table.td.string
+                father = table.td.string.strip()
             elif bgcolor == 'SILVER':
-                section = table.td.string
+                section = table.td.string.strip()
             elif bgcolor == 'WHITE' and table.a:
-                link = table.attrs[2][1]
+                link = table.attrs[2][1].split('\'')[1]
                 delLink = table.a.attrs[0][1]
-                title = table.td.contents[2]
+                title = table.td.contents[2].strip()
                 self.newsList.append( singleNews(father, section, link, delLink, title) )
-    
+
+    def deleteAll(self):
+        if self.newsList:
+            for news in self.newsList:
+                PyIOLSucker().IOLUrlOpen(BASE_PATH + news.delLink)
+                self.newsList.remove(news)
+        else:
+            print 'No news to remove'
+
     def printNews(self):
         if self.newsList:
             for news in self.newsList:
-                print   'Father: %s\n \
-                        Section: %s\n \
-                        Link: %s\n \
-                        DelLink: %s\n \
-                        Title: %s \n '\
+                print   'Father: %s\nSection: %s\nLink: %s\nDelLink: %s\nTitle: %s \n '\
                         % ( news.father, news.section, news.link, news.delLink, news.title)
         else:
-            print 'No news'
+            print 'No news to print'
 
 
 class singleNews(object):
