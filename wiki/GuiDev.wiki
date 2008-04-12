@@ -1,0 +1,12 @@
+#labels gui,PyGTK,Gllade
+= Introduction =
+Little page to give some resources for GUI dev.
+
+= Information =
+== Software ==
+ * [http://glade.gnome.org/ Glade]
+ * [http://www.pygtk.org/ PyGTK]
+
+== Tutorials ==
+ * [http://video.google.co.uk/videoplay?docid=5838951374743244232 Google Video]
+ * [http://www.hants.lug.org.uk/cgi-bin/wiki.pl?TechTalks/2ndDecember2006 Same video]
