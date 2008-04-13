@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from iolsucker import *
 import getpass
 
@@ -12,14 +10,14 @@ def main():
     sucker = PyIOLSucker()
     if not sucker.isLogged():
         sucker.doLogin(dni, pwd)
-    news = News()
-    news.printNews()
-    news.deleteAll()
-    news.printNews()
-    #subs = getSubjects()
+    #news = News()
+    #news.printNews()
+    #news.deleteAll()
+    #news.printNews()
+    subs = getSubjects()
 
-    #for subject in subs:
-    #    files = files + acidRain(subject.folder)
+    for subject in subs:
+        files = files + acidRain(subject.folder)
 
 
 main()
