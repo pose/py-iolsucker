@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-import urllib2, urllib, cookielib
+import urllib, urllib2, cookielib
 import re
+import string
 import datetime
 from BeautifulSoup import BeautifulSoup
 import cPickle
@@ -67,7 +67,7 @@ class IOLAbstractFolder(AbstractIOLPathNode):
     def __repr__(self):
         return  self.name + self._children.__repr__()
 
-
+#Inherits from IOLAbstractFolder
 class IOLFolder(IOLAbstractFolder):
      pass
 
@@ -153,6 +153,9 @@ class PyIOLSucker:
 
 class Subject(object):
     def __init__(self, url):
+        #To get different "Material Didactico's path, we must
+        #first connect to the main page of the subject and then
+        #open the one and only "Material Didactico's path"
         self.webPage = PyIOLSucker().IOLUrlOpen(BASE_PATH + url)
         self.folder = IOLFolder(MATERIAL_DIDACTICO_PATH, name='root')
 
@@ -244,13 +247,26 @@ def getSubjects():
     html = webPage.read()
 
     soup = BeautifulSoup(html)
-    #Omito el primer td que es de Ingeniera Informatica
-    #consigo las materias que curso
-    materias = soup('td', colspan='2')[1:]
 
-    subject_links = map( lambda x: x('a')[0]['href'],  materias)
+    #Checking if I can fix bug. Old code below
+    #materias = soup('td', colspan='2')[1:]
+    #subject_links = map( lambda x: x('a')[0]['href'],  materias)
+    
+    #new code.
+    #Gets subjets I am doing.
+    #from soup I don't get first one, because it should be the name of my career.
+    materias = soup.findAll('td', colspan="2")[1:]
+    subject_links = [materia('a')[0]['href'] for materia in materias if materia.a]
+
     if subject_links:
         for subject_link in subject_links:
+            #Stupid bug:
+            #@ utf8 links looks like: 
+            #mynav.asp?cmd=ChangeContext&amp;nivel=4&amp;snivel=22.09
+            #where they should be
+            #mynav.asp?cmd=ChangeContext&nivel=4&snivel=22.09
+            #Fixed with a string.replace
+            subject_link = string.replace(subject_link,"&amp;","&")
             subjects.append(Subject(subject_link))
 
     output = open('subjects_iol.pkl','wb')
